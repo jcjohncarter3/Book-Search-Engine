@@ -1,17 +1,24 @@
 const jwt = require("jsonwebtoken");
 const { AuthenticationError } = require("apollo-server-express");
+const { User } = require("../models");
 
 // set token secret and expiration date
 const secret = "mysecretsshhhhh";
 const expiration = "2h";
 
-const authMiddleware = ({ req }) => {
-  const token = req.headers.authorization || "";
-  // Logic to verify token and extract user information
+const authMiddleware = async (req) => {
+  const token = req.headers.authorization?.split(" ").pop().trim();
   if (!token) {
-    throw new AuthenticationError("You must be logged in!");
+    throw new AuthenticationError("You need to be logged in!");
   }
-  // Decode token and return user info
+
+  try {
+    const { data } = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = data;
+  } catch {
+    throw new AuthenticationError("Invalid token!");
+  }
+  return req;
 };
 
 module.exports = {
@@ -48,3 +55,5 @@ module.exports = {
     return jwt.sign({ data: payload }, secret, { expiresIn: expiration });
   },
 };
+
+module.exports = authMiddleware;
