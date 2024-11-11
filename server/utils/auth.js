@@ -6,19 +6,21 @@ const { User } = require("../models");
 const secret = "mysecretsshhhhh";
 const expiration = "2h";
 
-const authMiddleware = async (req) => {
+const authMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ").pop().trim();
   if (!token) {
-    throw new AuthenticationError("You need to be logged in!");
+    return res.status(400).json({ message: "You have no token!" });
   }
 
   try {
     const { data } = jwt.verify(token, process.env.JWT_SECRET);
     req.user = data;
   } catch {
-    throw new AuthenticationError("Invalid token!");
+    console.log("Invalid token");
+    return res.status(400).json({ message: "invalid token!" });
   }
-  return req;
+  // send to next endpoint
+  next();
 };
 
 module.exports = {
